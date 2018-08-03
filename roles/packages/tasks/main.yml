@@ -1,0 +1,42 @@
+---
+
+- name: Install Kubernetes prereqs
+  apt:
+    name: '{{ item }}'
+    state: present
+    update_cache: yes
+  with_items:
+  - apt-transport-https 
+  - curl
+
+- name: Add Kubernetes APT repository key
+  shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+- name: Put Kubernetes repository information
+  template:
+    src: kubernetes.list
+    dest: /etc/apt/sources.list.d/kubernetes.list
+
+- name: Install Docker, Kubernetes and other required packages
+  apt:
+    name: '{{ item }}'
+    state: present
+    update_cache: yes
+  with_items:
+  - kubelet
+  - kubeadm
+  - kubectl
+  - docker.io
+  - haveged
+    
+- name: Disable systemd-resolved
+  systemd:
+    name: systemd-resolved
+    enabled: no
+    state: stopped
+    
+- name: Enforce static resolv.conf
+  template:
+    src: resolv.conf
+    dest: /etc/resolv.conf
+

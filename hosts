@@ -1,0 +1,4 @@
+# Use for testing on DigitalOcean with configured SSH key
+
+scratch_vm ansible_host=178.128.199.245 ansible_user=root ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+

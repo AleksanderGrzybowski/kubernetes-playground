@@ -1,0 +1,39 @@
+---
+
+- name: Check if cluster is configured
+  shell: systemctl status kubelet.service
+  ignore_errors: yes
+  changed_when: false
+  register: kubelet_status
+
+- name: Initialize cluster
+  block:
+    - shell: kubeadm init --apiserver-advertise-address={{ ansible_default_ipv4.address }} --pod-network-cidr=10.244.0.0/16
+    - shell: mkdir -p $HOME/.kube
+    - shell: cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    - shell: kubectl taint nodes --all node-role.kubernetes.io/master-
+  when: kubelet_status.rc != 0
+
+- name: Install Flannel
+  shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.10.0/Documentation/kube-flannel.yml
+
+- name: Copy nginx files
+  synchronize:
+    src: roles/cluster/files/nginx-hostport-80
+    dest: /root/
+
+- name: Install nginx Ingress
+  shell: kubectl apply -f /root/nginx-hostport-80
+
+- name: Copy demo definition
+  template:
+    src: demo.j2
+    dest: /root/demo.yml
+
+- name: Run demo
+  shell: kubectl apply -f /root/demo.yml
+
+- name: Info
+  debug: 
+    msg:
+    - "Keep refreshing! http://{{ ansible_default_ipv4.address }}.xip.io"

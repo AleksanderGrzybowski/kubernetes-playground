@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+spec:
+  selector:
+    matchLabels:
+      app: demo
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+      - name: demo
+        image: jocatalin/kubernetes-bootcamp:v2
+        resources:
+          limits:
+            memory: "50Mi"
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+  selector:
+    app: demo
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: demo
+spec:
+  rules:
+  - host: {{ ansible_default_ipv4.address }}.xip.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: demo
+          servicePort: 8080
+
